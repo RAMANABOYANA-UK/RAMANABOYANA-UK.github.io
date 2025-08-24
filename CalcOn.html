@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CalcOn - Scientific Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #6e8efb, #a777e3);
+      padding: 20px;
+      overflow: hidden;
+    }
+    
+    /* Splash Screen */
+    #splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #6e8efb, #a777e3);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      transition: opacity 1s ease-out;
+    }
+    
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 5rem;
+      color: white;
+      margin-bottom: 10px;
+      text-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 1.5s ease-out, pulse 2s infinite;
+    }
+    
+    .subtext {
+      font-size: 1.5rem;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 40px;
+      animation: slideUp 1.5s ease-out;
+    }
+    
+    .start-btn {
+      padding: 15px 40px;
+      background: white;
+      color: #6e8efb;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+      animation: fadeIn 2s ease-out;
+    }
+    
+    .start-btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Calculator Container */
+    .calculator-container {
+      width: 340px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      opacity: 0;
+      transform: scale(0.9);
+      transition: all 0.8s ease;
+      position: relative;
+    }
+    
+    .calculator-container.active {
+      opacity: 1;
+      transform: scale(1);
+    }
+    
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 20px;
+      background: linear-gradient(to right, #3498db, #9b59b6);
+      color: white;
+    }
+    
+    .app-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+    }
+    
+    .settings-icon {
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    
+    .settings-icon:hover {
+      transform: rotate(30deg);
+    }
+    
+    .tabs {
+      display: flex;
+      background: linear-gradient(to right, #3498db, #9b59b6);
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .tab.active {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    
+    .calculator {
+      padding: 20px;
+    }
+    
+    .display-container {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+      position: relative;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    
+    #display {
+      width: 100%;
+      min-height: 60px;
+      border: none;
+      text-align: right;
+      font-size: 28px;
+      background: transparent;
+      color: #2c3e50;
+      overflow-wrap: break-word;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+    
+    .error-message {
+      position: absolute;
+      bottom: 5px;
+      left: 15px;
+      font-size: 12px;
+      color: #e74c3c;
+      display: none;
+    }
+    
+    .scroll-indicator {
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #aaa;
+      font-size: 12px;
+      display: none;
+    }
+    
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    
+    button {
+      padding: 15px 0;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+      color: #2c3e50;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .number {
+      background: #e8f4fc;
+    }
+    
+    .operator {
+      background: #ffeaa7;
+    }
+    
+    .function {
+      background: #d1f7c4;
+    }
+    
+    .equals {
+      background: #74b9ff;
+      color: white;
+    }
+    
+    .clear {
+      background: #ff7675;
+      color: white;
+    }
+    
+    .double-width {
+      grid-column: span 2;
+    }
+    
+    .page {
+      display: none;
+    }
+    
+    .page.active {
+      display: block;
+    }
+    
+    .memory-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .memory-btn {
+      background: #a29bfe;
+      color: white;
+      font-size: 14px;
+    }
+    
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 200;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s;
+    }
+    
+    .modal-content {
+      background-color: #fefefe;
+      margin: 5% auto;
+      padding: 20px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      position: relative;
+      animation: slideUp 0.4s;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    .close:hover {
+      color: #000;
+    }
+    
+    .modal-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .modal-icon {
+      margin-right: 10px;
+      font-size: 24px;
+      color: #3498db;
+    }
+    
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    
+    .history-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin: 15px 0;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 10px;
+    }
+    
+    .history-item {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .history-item:last-child {
+      border-bottom: none;
+    }
+    
+    .history-expression {
+      font-weight: 500;
+    }
+    
+    .history-result {
+      color: #3498db;
+      font-weight: bold;
+    }
+    
+    .history-date {
+      font-size: 0.8rem;
+      color: #777;
+      margin-top: 5px;
+    }
+    
+    .clear-history {
+      background: #ff7675;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    
+    .abbreviation-item {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .abbreviation-term {
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 5px;
+      font-size: 1.1rem;
+    }
+    
+    .abbreviation-meaning {
+      color: #555;
+    }
+    
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    
+    .pagination-btn {
+      background: #74b9ff;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 0 5px;
+    }
+    
+    .pagination-btn.active {
+      background: #3498db;
+    }
+    
+    .pagination-btn:hover:not(.active) {
+      background: #0984e3;
+    }
+    
+    /* Settings Menu */
+    .settings-menu {
+      display: none;
+      position: absolute;
+      top: 60px;
+      right: 15px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      z-index: 10;
+      width: 200px;
+      overflow: hidden;
+    }
+    
+    .settings-item {
+      padding: 12px 15px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .settings-item:hover {
+      background: #f0f0f0;
+    }
+    
+    .settings-icon-item {
+      margin-right: 10px;
+      width: 20px;
+      text-align: center;
+      color: #3498db;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #c5c5c5;
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a5a5a5;
+    }
+  </style>
+</head>
+<body>
+  <!-- Splash Screen -->
+  <div id="splash-screen">
+    <div class="logo">CalcOn</div>
+    <div class="subtext">Calculator Online</div>
+    <button class="start-btn" onclick="startApp()">Get Started</button>
+  </div>
+
+  <!-- Calculator Container -->
+  <div class="calculator-container">
+    <div class="app-header">
+      <div class="app-title">CalcOn</div>
+      <div class="settings-icon" onclick="toggleSettings()">
+        <i class="fas fa-cog"></i>
+      </div>
+    </div>
+    
+    <!-- Settings Menu -->
+    <div class="settings-menu" id="settings-menu">
+      <div class="settings-item" onclick="showInfo()">
+        <div class="settings-icon-item"><i class="fas fa-info-circle"></i></div>
+        <div>Info</div>
+      </div>
+      <div class="settings-item" onclick="showHistory()">
+        <div class="settings-icon-item"><i class="fas fa-history"></i></div>
+        <div>History</div>
+      </div>
+      <div class="settings-item" onclick="showAbbreviations()">
+        <div class="settings-icon-item"><i class="fas fa-book"></i></div>
+        <div>Abbreviations</div>
+      </div>
+    </div>
+    
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('basic')">Basic</div>
+      <div class="tab" onclick="switchTab('trigonometry')">Trigonometry</div>
+      <div class="tab" onclick="switchTab('scientific')">Scientific</div>
+    </div>
+    
+    <div class="calculator">
+      <div class="display-container">
+        <div id="display" contenteditable="false"></div>
+        <div class="scroll-indicator" id="scroll-indicator">
+          <i class="fas fa-ellipsis-v"></i>
+        </div>
+        <div class="error-message" id="error-message"></div>
+      </div>
+      
+      <!-- Basic Calculator Page -->
+      <div id="basic-page" class="page active">
+        <div class="buttons">
+          <button class="clear" onclick="clearDisplay()">C</button>
+          <button class="function" onclick="backspace()">⌫</button>
+          <button class="function" onclick="append('%')">%</button>
+          <button class="operator" onclick="append('/')">÷</button>
+          
+          <button class="number" onclick="append('7')">7</button>
+          <button class="number" onclick="append('8')">8</button>
+          <button class="number" onclick="append('9')">9</button>
+          <button class="operator" onclick="append('*')">×</button>
+          
+          <button class="number" onclick="append('4')">4</button>
+          <button class="number" onclick="append('5')">5</button>
+          <button class="number" onclick="append('6')">6</button>
+          <button class="operator" onclick="append('-')">−</button>
+          
+          <button class="number" onclick="append('1')">1</button>
+          <button class="number" onclick="append('2')">2</button>
+          <button class="number" onclick="append('3')">3</button>
+          <button class="operator" onclick="append('+')">+</button>
+          
+          <button class="number double-width" onclick="append('0')">0</button>
+          <button class="number" onclick="append('.')">.</button>
+          <button class="equals" onclick="calculate()">=</button>
+        </div>
+        
+        <div class="memory-buttons">
+          <button class="memory-btn" onclick="memoryStore()">MS</button>
+          <button class="memory-btn" onclick="memoryRecall()">MR</button>
+          <button class="memory-btn" onclick="memoryClear()">MC</button>
+          <button class="memory-btn" onclick="memoryAdd()">M+</button>
+        </div>
+      </div>
+      
+      <!-- Trigonometry Page -->
+      <div id="trigonometry-page" class="page">
+        <div class="buttons">
+          <button class="function" onclick="appendFunction('Math.sin(')">sin</button>
+          <button class="function" onclick="appendFunction('Math.cos(')">cos</button>
+          <button class="function" onclick="appendFunction('Math.tan(')">tan</button>
+          <button class="operator" onclick="append('(')">(</button>
+          
+          <button class="function" onclick="appendFunction('Math.asin(')">sin⁻¹</button>
+          <button class="function" onclick="appendFunction('Math.acos(')">cos⁻¹</button>
+          <button class="function" onclick="appendFunction('Math.atan(')">tan⁻¹</button>
+          <button class="operator" onclick="append(')')">)</button>
+          
+          <button class="function" onclick="appendFunction('Math.log10(')">log</button>
+          <button class="function" onclick="appendFunction('Math.log(')">ln</button>
+          <button class="function" onclick="append('Math.PI')">π</button>
+          <button class="function" onclick="append('Math.E')">e</button>
+          
+          <button class="function" onclick="appendFunction('Math.sqrt(')">√</button>
+          <button class="function" onclick="append('**')">x^y</button>
+          <button class="function" onclick="calculateFactorial()">x!</button>
+          <button class="function" onclick="append('**2')">x²</button>
+          
+          <button class="clear" onclick="clearDisplay()">C</button>
+          <button class="function" onclick="backspace()">⌫</button>
+          <button class="function" onclick="calculate()">=</button>
+          <button class="operator" onclick="append('+')">+</button>
+        </div>
+      </div>
+      
+      <!-- Scientific Page -->
+      <div id="scientific-page" class="page">
+        <div class="buttons">
+          <button class="function" onclick="appendFunction('Math.abs(')">abs</button>
+          <button class="function" onclick="appendFunction('Math.exp(')">exp</button>
+          <button class="function" onclick="appendFunction('Math.pow(')">pow</button>
+          <button class="operator" onclick="append('(')">(</button>
+          
+          <button class="function" onclick="appendFunction('Math.round(')">round</button>
+          <button class="function" onclick="appendFunction('Math.floor(')">floor</button>
+          <button class="function" onclick="appendFunction('Math.ceil(')">ceil</button>
+          <button class="operator" onclick="append(')')">)</button>
+          
+          <button class="function" onclick="append('Math.random()')">rand</button>
+          <button class="function" onclick="append('Math.PI')">π</button>
+          <button class="function" onclick="append('Math.E')">e</button>
+          <button class="function" onclick="toggleAngleMode()">DEG</button>
+          
+          <button class="function" onclick="append('1/')">1/x</button>
+          <button class="function" onclick="appendFunction('Math.pow(10,')">10^x</button>
+          <button class="function" onclick="appendFunction('Math.log(')">log</button>
+          <button class="function" onclick="appendFunction('Math.log10(')">log₁₀</button>
+          
+          <button class="clear" onclick="clearDisplay()">C</button>
+          <button class="function" onclick="backspace()">⌫</button>
+          <button class="function" onclick="calculate()">=</button>
+          <button class="operator" onclick="append('+')">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Modal -->
+  <div id="info-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('info-modal')">&times;</span>
+      <div class="modal-header">
+        <div class="modal-icon"><i class="fas fa-info-circle"></i></div>
+        <div class="modal-title">About CalcOn</div>
+      </div>
+      <p>CalcOn is a powerful scientific calculator with multiple calculation modes:</p>
+      <ul style="margin: 15px; padding-left: 20px;">
+        <li><strong>Basic Mode</strong>: Standard arithmetic operations</li>
+        <li><strong>Trigonometry Mode</strong>: Trigonometric functions and inverses</li>
+        <li><strong>Scientific Mode</strong>: Advanced mathematical functions</li>
+      </ul>
+      <p>All calculations are performed locally in your browser, ensuring your data remains private.</p>
+      <p>Your calculation history is stored for 30 days for your reference.</p>
+      <p><strong>Scroll Feature</strong>: The display area is now scrollable, allowing you to view long expressions and calculations.</p>
+    </div>
+  </div>
+
+  <!-- History Modal -->
+  <div id="history-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('history-modal')">&times;</span>
+      <div class="modal-header">
+        <div class="modal-icon"><i class="fas fa-history"></i></div>
+        <div class="modal-title">Calculation History</div>
+      </div>
+      <div class="history-list" id="history-list">
+        <!-- History items will be added here dynamically -->
+      </div>
+      <button class="clear-history" onclick="clearHistory()">Clear History</button>
+    </div>
+  </div>
+
+  <!-- Abbreviations Modal -->
+  <div id="abbreviations-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('abbreviations-modal')">&times;</span>
+      <div class="modal-header">
+        <div class="modal-icon"><i class="fas fa-book"></i></div>
+        <div class="modal-title">Calculator Abbreviations</div>
+      </div>
+      <div id="abbreviations-list">
+        <!-- Abbreviations will be loaded dynamically -->
+      </div>
+      <div class="pagination" id="abbreviation-pagination">
+        <!-- Pagination buttons will be added here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let display = document.getElementById("display");
+    let errorMessage = document.getElementById("error-message");
+    let scrollIndicator = document.getElementById("scroll-indicator");
+    let memory = 0;
+    let isDegreeMode = true;
+    let lastFunction = "";
+    
+    // Abbreviations data with scientific terms
+    const abbreviations = [
+      { term: "MS (Memory Store)", meaning: "Stores the current display value in memory" },
+      { term: "MR (Memory Recall)", meaning: "Recalls the value stored in memory" },
+      { term: "MC (Memory Clear)", meaning: "Clears the memory value" },
+      { term: "M+ (Memory Add)", meaning: "Adds the current display value to the memory value" },
+      { term: "sin (Sine)", meaning: "Calculates the sine of an angle" },
+      { term: "cos (Cosine)", meaning: "Calculates the cosine of an angle" },
+      { term: "tan (Tangent)", meaning: "Calculates the tangent of an angle" },
+      { term: "sin⁻¹ (Arcsine)", meaning: "Calculates the inverse sine function" },
+      { term: "cos⁻¹ (Arccosine)", meaning: "Calculates the inverse cosine function" },
+      { term: "tan⁻¹ (Arctangent)", meaning: "Calculates the inverse tangent function" },
+      { term: "log (Logarithm)", meaning: "Calculates the base-10 logarithm" },
+      { term: "ln (Natural Logarithm)", meaning: "Calculates the natural logarithm (base e)" },
+      { term: "π (Pi)", meaning: "The mathematical constant Pi (approximately 3.14159)" },
+      { term: "e (Euler's Number)", meaning: "The base of the natural logarithm (approximately 2.71828)" },
+      { term: "√ (Square Root)", meaning: "Calculates the square root of a number" },
+      { term: "x² (Square)", meaning: "Calculates the square of a number" },
+      { term: "x^y (Power)", meaning: "Raises a number to the power of another number" },
+      { term: "x! (Factorial)", meaning: "Calculates the factorial of a number" },
+      { term: "abs (Absolute Value)", meaning: "Returns the absolute value of a number" },
+      { term: "exp (Exponential)", meaning: "Calculates e raised to the power of a number" },
+      { term: "pow (Power Function)", meaning: "Raises a number to the power of another number" },
+      { term: "round (Round)", meaning: "Rounds a number to the nearest integer" },
+      { term: "floor (Floor)", meaning: "Rounds a number down to the nearest integer" },
+      { term: "ceil (Ceiling)", meaning: "Rounds a number up to the nearest integer" },
+      { term: "rand (Random)", meaning: "Generates a random number between 0 and 1" },
+      { term: "DEG/RAD (Degree/Radian)", meaning: "Switches between degree and radian mode for trigonometric functions" },
+      { term: "1/x (Reciprocal)", meaning: "Calculates the reciprocal of a number" },
+      { term: "10^x (Power of 10)", meaning: "Calculates 10 raised to the power of a number" },
+      { term: "log₁₀ (Logarithm Base 10)", meaning: "Calculates the base-10 logarithm of a number" },
+      { term: "mod (Modulo)", meaning: "Calculates the remainder of a division operation" },
+      { term: "hyp (Hypotenuse)", meaning: "Calculates the hypotenuse of a right triangle" },
+      { term: "nPr (Permutations)", meaning: "Calculates the number of permutations of n items taken r at a time" },
+      { term: "nCr (Combinations)", meaning: "Calculates the number of combinations of n items taken r at a time" },
+      { term: "Σ (Summation)", meaning: "Calculates the sum of a sequence of numbers" },
+      { term: "∏ (Product)", meaning: "Calculates the product of a sequence of numbers" },
+      { term: "∫ (Integral)", meaning: "Calculates the integral of a function" },
+      { term: "d/dx (Derivative)", meaning: "Calculates the derivative of a function" },
+      { term: "√ (Root)", meaning: "Calculates the nth root of a number" },
+      { term: "± (Plus/Minus)", meaning: "Represents both positive and negative values" },
+      { term: "EE (Scientific Notation)", meaning: "Enters numbers in scientific notation" }
+    ];
+    
+    // Initialize the calculator
+    function initCalculator() {
+      loadHistory();
+      updateAngleModeButton();
+      checkScrollable();
+      initAbbreviations();
+    }
+    
+    // Initialize abbreviations with pagination
+    function initAbbreviations() {
+      const itemsPerPage = 10;
+      const totalPages = Math.ceil(abbreviations.length / itemsPerPage);
+      const paginationContainer = document.getElementById('abbreviation-pagination');
+      const abbreviationsContainer = document.getElementById('abbreviations-list');
+      
+      // Clear previous content
+      paginationContainer.innerHTML = '';
+      
+      // Create pagination buttons
+      for (let i = 0; i < totalPages; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = 'pagination-btn';
+        pageBtn.textContent = i + 1;
+        pageBtn.addEventListener('click', () => showAbbreviationsPage(i));
+        paginationContainer.appendChild(pageBtn);
+      }
+      
+      // Show first page by default
+      showAbbreviationsPage(0);
+    }
+    
+    // Show specific page of abbreviations
+    function showAbbreviationsPage(pageNumber) {
+      const itemsPerPage = 10;
+      const startIndex = pageNumber * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, abbreviations.length);
+      const abbreviationsContainer = document.getElementById('abbreviations-list');
+      const paginationButtons = document.querySelectorAll('.pagination-btn');
+      
+      // Update active pagination button
+      paginationButtons.forEach((btn, index) => {
+        if (index === pageNumber) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      
+      // Clear previous content
+      abbreviationsContainer.innerHTML = '';
+      
+      // Add abbreviations for current page
+      for (let i = startIndex; i < endIndex; i++) {
+        const abbr = abbreviations[i];
+        const abbrItem = document.createElement('div');
+        abbrItem.className = 'abbreviation-item';
+        abbrItem.innerHTML = `
+          <div class="abbreviation-term">${abbr.term}</div>
+          <div class="abbreviation-meaning">${abbr.meaning}</div>
+        `;
+        abbreviationsContainer.appendChild(abbrItem);
+      }
+    }
+    
+    // Start the application
+    function startApp() {
+      const splashScreen = document.getElementById('splash-screen');
+      const calculator = document.querySelector('.calculator-container');
+      
+      // Fade out splash screen
+      splashScreen.style.opacity = '0';
+      
+      // Show calculator with animation
+      setTimeout(() => {
+        splashScreen.style.display = 'none';
+        calculator.classList.add('active');
+        initCalculator();
+      }, 1000);
+    }
+    
+    function append(value) {
+      hideError();
+      
+      if (display.textContent === "Error") {
+        clearDisplay();
+      }
+      
+      // If we have a function waiting for input, add the value inside parentheses
+      if (lastFunction) {
+        // Check if we're adding to an existing function call
+        if (display.textContent.endsWith(lastFunction)) {
+          display.textContent += value + ')';
+          lastFunction = "";
+        } else {
+          display.textContent += value;
+        }
+      } else {
+        display.textContent += value;
+      }
+      
+      checkScrollable();
+      scrollToBottom();
+    }
+    
+    function appendFunction(func) {
+      hideError();
+      
+      if (display.textContent === "Error") {
+        clearDisplay();
+      }
+      
+      // Store the function for later processing
+      lastFunction = func;
+      display.textContent += func;
+      
+      checkScrollable();
+      scrollToBottom();
+    }
+    
+    function clearDisplay() {
+      display.textContent = "";
+      lastFunction = "";
+      hideError();
+      checkScrollable();
+    }
+    
+    function backspace() {
+      hideError();
+      
+      // If we're deleting a function, clear the function tracker
+      if (lastFunction && display.textContent.endsWith(lastFunction)) {
+        lastFunction = "";
+      }
+      
+      display.textContent = display.textContent.slice(0, -1);
+      checkScrollable();
+    }
+    
+    function calculate() {
+      try {
+        hideError();
+        
+        // Check for incomplete expressions
+        if (lastFunction && !display.textContent.includes(')')) {
+          showError("Complete the function with a value and closing parenthesis");
+          return;
+        }
+        
+        // Check for empty expressions
+        if (!display.textContent.trim()) {
+          showError("Enter an expression to calculate");
+          return;
+        }
+        
+        // Replace visual symbols with JavaScript operators
+        let expression = display.textContent
+          .replace(/×/g, '*')
+          .replace(/÷/g, '/')
+          .replace(/π/g, 'Math.PI')
+          .replace(/\b(e)\b(?!\()/g, 'Math.E') // Replace standalone 'e' but not function calls like Math.exp
+          .replace(/\^/g, '**');
+        
+        // Evaluate the expression
+        let result = eval(expression);
+        
+        // Handle very large or very small numbers
+        if (typeof result === 'number') {
+          if (Math.abs(result) > 1e12 || (Math.abs(result) < 1e-12 && result !== 0)) {
+            result = result.toExponential(8);
+          } else {
+            // Round to avoid floating point precision issues
+            result = parseFloat(result.toPrecision(12));
+          }
+        }
+        
+        // Save to history
+        addToHistory(display.textContent, result);
+        
+        // Update display
+        display.textContent = result;
+        
+        // Reset function tracker
+        lastFunction = "";
+        
+        checkScrollable();
+        scrollToBottom();
+      } catch (error) {
+        display.textContent = "Error";
+        showError("Invalid expression. Please check your input.");
+        checkScrollable();
+      }
+    }
+    
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = "block";
+      display.style.color = "#e74c3c";
+      
+      // Add shake animation to display
+      display.parentElement.style.animation = "shake 0.5s";
+      setTimeout(() => {
+        display.parentElement.style.animation = "";
+      }, 500);
+    }
+    
+    function hideError() {
+      errorMessage.style.display = "none";
+      display.style.color = "#2c3e50";
+    }
+    
+    // Check if display is scrollable and show indicator
+    function checkScrollable() {
+      if (display.scrollHeight > display.clientHeight) {
+        scrollIndicator.style.display = 'block';
+      } else {
+        scrollIndicator.style.display = 'none';
+      }
+    }
+    
+    // Scroll to bottom of display
+    function scrollToBottom() {
+      display.scrollTop = display.scrollHeight;
+    }
+    
+    // Memory functions
+    function memoryStore() {
+      memory = parseFloat(display.textContent) || 0;
+    }
+    
+    function memoryRecall() {
+      display.textContent = memory;
+      checkScrollable();
+      scrollToBottom();
+    }
+    
+    function memoryClear() {
+      memory = 0;
+    }
+    
+    function memoryAdd() {
+      memory += parseFloat(display.textContent) || 0;
+    }
+    
+    function toggleAngleMode() {
+      isDegreeMode = !isDegreeMode;
+      updateAngleModeButton();
+    }
+    
+    function updateAngleModeButton() {
+      document.querySelectorAll('.function').forEach(btn => {
+        if (btn.textContent === 'DEG' || btn.textContent === 'RAD') {
+          btn.textContent = isDegreeMode ? 'DEG' : 'RAD';
+        }
+      });
+    }
+    
+    // Scientific functions
+    function calculateSqrt() {
+      try {
+        hideError();
+        let value = parseFloat(display.textContent) || 0;
+        if (value < 0) throw new Error("Negative value");
+        display.textContent = Math.sqrt(value);
+        checkScrollable();
+        scrollToBottom();
+      } catch (error) {
+        display.textContent = "Error";
+        showError("Cannot calculate square root of negative number");
+        checkScrollable();
+      }
+    }
+    
+    function calculateFactorial() {
+      try {
+        hideError();
+        let value = parseInt(display.textContent) || 0;
+        if (value < 0) throw new Error("Negative value");
+        if (value > 170) throw new Error("Value too large");
+        
+        let result = 1;
+        for (let i = 2; i <= value; i++) {
+          result *= i;
+        }
+        display.textContent = result;
+        checkScrollable();
+        scrollToBottom();
+      } catch (error) {
+        display.textContent = "Error";
+        showError("Invalid input for factorial");
+        checkScrollable();
+      }
+    }
+    
+    // Tab switching
+    function switchTab(tabName) {
+      // Update active tab
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Show active page
+      document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+      });
+      document.getElementById(tabName + '-page').classList.add('active');
+      
+      // Clear any errors when switching tabs
+      hideError();
+    }
+    
+    // Settings functions
+    function toggleSettings() {
+      const settingsMenu = document.getElementById('settings-menu');
+      settingsMenu.style.display = settingsMenu.style.display === 'block' ? 'none' : 'block';
+    }
+    
+    // Close settings when clicking outside
+    document.addEventListener('click', function(event) {
+      const settingsMenu = document.getElementById('settings-menu');
+      const settingsIcon = document.querySelector('.settings-icon');
+      
+      if (settingsMenu.style.display === 'block' && 
+          !settingsMenu.contains(event.target) && 
+          !settingsIcon.contains(event.target)) {
+        settingsMenu.style.display = 'none';
+      }
+    });
+    
+    // Modal functions
+    function showInfo() {
+      document.getElementById('info-modal').style.display = 'block';
+      document.getElementById('settings-menu').style.display = 'none';
+    }
+    
+    function showHistory() {
+      document.getElementById('history-modal').style.display = 'block';
+      document.getElementById('settings-menu').style.display = 'none';
+    }
+    
+    function showAbbreviations() {
+      document.getElementById('abbreviations-modal').style.display = 'block';
+      document.getElementById('settings-menu').style.display = 'none';
+    }
+    
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+      const modals = document.getElementsByClassName('modal');
+      for (let i = 0; i < modals.length; i++) {
+        if (event.target === modals[i]) {
+          modals[i].style.display = 'none';
+        }
+      }
+    });
+    
+    // History functions
+    function addToHistory(expression, result) {
+      const history = getHistory();
+      const historyItem = {
+        expression,
+        result,
+        timestamp: new Date().toISOString()
+      };
+      
+      history.unshift(historyItem);
+      
+      // Keep only last 100 items and items from last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const filteredHistory = history
+        .filter(item => new Date(item.timestamp) > thirtyDaysAgo)
+        .slice(0, 100);
+      
+      localStorage.setItem('calculatorHistory', JSON.stringify(filteredHistory));
+      updateHistoryDisplay();
+    }
+    
+    function getHistory() {
+      const historyJSON = localStorage.getItem('calculatorHistory');
+      return historyJSON ? JSON.parse(historyJSON) : [];
+    }
+    
+    function loadHistory() {
+      updateHistoryDisplay();
+    }
+    
+    function updateHistoryDisplay() {
+      const historyList = document.getElementById('history-list');
+      const history = getHistory();
+      
+      if (history.length === 0) {
+        historyList.innerHTML = '<div class="history-item">No history yet</div>';
+        return;
+      }
+      
+      historyList.innerHTML = '';
+      history.forEach(item => {
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        
+        const date = new Date(item.timestamp);
+        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        
+        historyItem.innerHTML = `
+          <div>
+            <div class="history-expression">${item.expression}</div>
+            <div class="history-result">= ${item.result}</div>
+            <div class="history-date">${formattedDate}</div>
+          </div>
+        `;
+        
+        historyItem.addEventListener('click', () => {
+          display.textContent = item.expression;
+          checkScrollable();
+          scrollToBottom();
+          closeModal('history-modal');
+        });
+        
+        historyList.appendChild(historyItem);
+      });
+    }
+    
+    function clearHistory() {
+      localStorage.removeItem('calculatorHistory');
+      updateHistoryDisplay();
+    }
+    
+    // Initialize on load
+    window.onload = function() {
+      // Add event listener for display scrolling
+      display.addEventListener('scroll', function() {
+        if (this.scrollTop + this.clientHeight >= this.scrollHeight) {
+          scrollIndicator.style.opacity = '0.3';
+        } else {
+          scrollIndicator.style.opacity = '1';
+        }
+      });
+    };
+  </script>
+</body>
+</html>
